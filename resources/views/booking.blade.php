@@ -9,24 +9,34 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
 
     <title>ĐẶT PHÒNG</title>
+    <style>
+        #alert{
+            transition: all 0.2s linear;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container mt-5 border">
+<div class="container mt-5 border pt-4">
 {{--    <input type="text" placeholder="Họ và tên" name="full_name">--}}
 {{--    <input type="text" placeholder="Họ và tên" name="full_name">--}}
 {{--    <input type="text" placeholder="Họ và tên" name="full_name">--}}
 {{--    <input type="text" placeholder="Họ và tên" name="full_name">--}}
 {{--    <input type="date" name="checkin">--}}
 {{--    <input type="date" name="checkout">--}}
-    <form class="row p-4">
+    <div class="alert  alert-dismissible" id="alert" role="alert">
+        <span id="message"></span>
+
+    </div>
+    <form class="row p-4" >
+        @csrf
         <div class="form-group col-md-4">
             <label for="full_name">Họ và tên</label>
             <input type="text" class="form-control" id="full_name" name="full_name" placeholder="Họ và tên">
         </div>
         <div class="form-group col-md-4">
-            <label for="exampleFormControlInput1">Email</label>
-            <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="abc@gmail.com">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" placeholder="abc@gmail.com">
         </div>
         <div class="form-group col-md-4">
             <label for="phone">Số điện thoại</label>
@@ -62,7 +72,7 @@
             <input type="text" disabled class="form-control" id="total_price" name="total_price">
         </div>
         <div class="text-center col-12 d-flex justify-content-end">
-            <button type="button" class="btn btn-primary">Đặt phòng</button>
+            <button type="button" id="order_room" class="btn btn-primary">Đặt phòng</button>
         </div>
     </form>
 </div>
@@ -75,12 +85,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
 <script type="text/javascript">
     $(document).ready(function () {
-        let checkInDate = null;
-        let checkOutDate = null;
-        let priceEl = $("#total_price");
-        let rooms = [];
+        var checkInDate = null;
+        var checkOutDate = null;
+        var priceEl = $("#total_price");
+        var rooms = [];
         const typeDropdown = $("#room_type");
         const roomDropdown = $("#room_code");
+        $("#alert").addClass("d-none")
 
         roomDropdown.change((e) => {
             setPrice();
@@ -89,27 +100,36 @@
         typeDropdown.change(setPrice());
 
         $("#checkin").change(function (event) {
-            checkInDate = new Date(event.target.value).getTime();
+            checkInDate = new Date(event.target.value);
+            let result = null;
             let today = new Date();
-            if(checkInDate < today.getTime()){
+            if(checkInDate.getTime() < today.getTime()){
                 checkInDate = null;
-                $("#checkin").val(checkInDate);
+                $("#checkin").val(result);
                 alert('Ngày đến không hợp lệ');
             }
             else{
+                result = checkInDate.getFullYear() + "-" + ("0" +( checkInDate.getMonth() + 1)).slice(-2) + "-" + ("0" + checkInDate.getDate()).slice(-2) ;
+                $("#checkin").val(result);
                 setPrice();
             }
+
         })
 
         $("#checkout").change(function (event) {
-            checkOutDate = new Date(event.target.value).getTime();
-            if(checkOutDate < checkInDate){
+            checkOutDate = new Date(event.target.value);
+            let result = null;
+            if(checkOutDate.getTime() < checkInDate){
                 checkOutDate = null;
-                $("#checkout").val(checkOutDate);
+                $("#checkout").val(result);
                 alert('Ngày trả phòng không hợp lệ');
             }
-            else{
+            else {
+                result = checkOutDate.getFullYear() + "-" + ("0" +( checkOutDate.getMonth() + 1)).slice(-2) + "-" + ("0" + checkOutDate.getDate()).slice(-2) ;
+
+                $("#checkout").val(result);
                 setPrice();
+
             }
 
         })
@@ -170,8 +190,70 @@
             roomOptions.remove()
             for(room of showRoom){
                 let money = formatMoney(room.price) ;
-                let newOption = `<option id=${room.id} roomType=${room.room_type_id} value=${room.id}>${room.room_code} - ${money}</option>`
+                let newOption = `<option id=${room.id} roomType=${room.room_type_id}
+                        value=${room.id}>${room.room_code} - ${money}</option>`
                 roomDropdown.append(newOption);
+            }
+        })
+
+        $("#order_room").click(() => {
+            var newCheckIn = null;
+            var checkInStr = null;
+            var newCheckOut = null;
+            var checkOutStr = null;
+            if(checkInDate){
+                 newCheckIn = new Date(checkInDate);
+                 checkInStr = newCheckIn.getFullYear() + "-" +
+                    ("0" +( newCheckIn.getMonth() + 1)).slice(-2) + "-" + ("0" + newCheckIn.getDate()).slice(-2) ;
+            }
+            if(checkOutDate){
+                newCheckOut = new Date(checkOutDate);
+                checkOutStr = newCheckOut.getFullYear() + "-" +
+                    ("0" +( newCheckOut.getMonth() + 1)).slice(-2) + "-" + ("0" + newCheckOut.getDate()).slice(-2) ;
+            }
+            if(checkInStr && checkOutStr){
+                let data = {};
+                data["full_name"] = $("#full_name").val();
+                data["email"] = $("#email").val();
+                data["phone"] = $("#phone").val();
+                data["quantity"] = Number.parseInt($("#quantity").val());
+                data["checkin"] = checkInStr;
+                data["checkout"] = checkOutStr;
+                data["room_id"] = Number.parseInt(roomDropdown.val());
+                console.log(data)
+
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/api/booking',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: data,
+                    success: function (response) {
+                        console.log(response)
+                        $("#message").text(response.message);
+                        const alert = $("#alert");
+                        alert.removeClass("d-none");
+                        alert.addClass("d-block");
+                        let nameStatus = "";
+                        if(response.type === "Success"){
+                            nameStatus = "alert-success"
+                        }else{
+                            nameStatus = "alert-danger"
+                        }
+                        alert.addClass(nameStatus)
+                        setTimeout(() => {
+                            alert.removeClass("d-block");
+                            alert.addClass("d-none");
+                            alert.removeClass(nameStatus)
+                            nameStatus = ""
+                        }, 3500);
+
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log('Fail to check');
+                    }
+                })
+            }else{
+                console.log(roomDropdown.val())
             }
         })
     });

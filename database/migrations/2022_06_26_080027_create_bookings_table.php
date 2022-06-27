@@ -18,8 +18,8 @@ class CreateBookingsTable extends Migration
             $table->string('full_name');
             $table->string('phone');
             $table->string('email');
-            $table->date('checkin');
-            $table->date('checkout');
+            $table->string('checkin');
+            $table->string('checkout');
             $table->integer('quantity');
             $table->integer('room_id');
             $table->double('total_money');
