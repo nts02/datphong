@@ -228,13 +228,17 @@
                     dataType: 'json',
                     data: data,
                     success: function (response) {
-                        console.log(response)
-                        $("#message").text(response.message);
+                        if(response.message){
+                            $("#message").text( response.message);
+                        }else{
+                            $("#message").text( response.notification.message);
+                        }
                         const alert = $("#alert");
                         alert.removeClass("d-none");
                         alert.addClass("d-block");
                         let nameStatus = "";
-                        if(response.type === "Success"){
+                        console.log(response.type=="Success" || response.notification.type == "Success")
+                        if(response.notification.type == "Success" || response.type=="Success"){
                             nameStatus = "alert-success"
                         }else{
                             nameStatus = "alert-danger"

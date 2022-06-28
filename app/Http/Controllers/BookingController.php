@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
-    public function datPhong(Request $request){
-
-    }
 
     public function check(Request $request){
 
@@ -39,13 +36,31 @@ class BookingController extends Controller
         $count = Booking::where('room_id',$request->room_id)->count();
         if($count == 0){
             $result = $booking->save();
+//            $room = Room::findOrFail($request->room_id);
+//            $roomName = $room->room_code;
             if($result){
                 $client = new Client();
                 $res = $client->request('GET','http://127.0.0.1:8001/api/notification/1');
-                $response = json_decode($res->getBody()->getContents());
-                unset($response->id);
-                // cho vao json
-                return response()->json($response);
+
+                $send = new Client();
+                $resEmail = $send->request('POST','http://127.0.0.1:8001/api/sendmail',[
+                    'json' => [
+                        'id' =>  $booking->id,
+                        'full_name'=> $request->full_name,
+                        'phone' => $request->phone,
+                        'email' => $request->email,
+                        'checkin'=> $request->checkin,
+                        'checkout'=> $request->checkout,
+                        'quantity' => $request->quantity,
+                        'room_id'=>$request->room_id,
+                        'money'=>$total_money
+                    ]
+                ]);
+
+                return response()->json(array(
+                    'notification' => json_decode($res->getBody()->getContents()),
+                    'send_mail' => $resEmail->getBody()->getContents(),
+                ));
             }
         }
 
@@ -57,12 +72,29 @@ class BookingController extends Controller
         if($check == $count ) {
             $result = $booking->save();
             if($result){
+
                 $client = new Client();
                 $res = $client->request('GET','http://127.0.0.1:8001/api/notification/1');
-                $response = json_decode($res->getBody()->getContents());
-                unset($response->id);
-                // cho vao json
-                return response()->json($response);
+
+                $send = new Client();
+                $resEmail = $send->request('POST','http://127.0.0.1:8001/api/sendmail',[
+                    'json' => [
+                        'id' =>  $booking->id,
+                        'full_name'=> $request->full_name,
+                        'phone' => $request->phone,
+                        'email' => $request->email,
+                        'checkin'=> $request->checkin,
+                        'checkout'=> $request->checkout,
+                        'quantity' => $request->quantity,
+                        'room_id'=>$request->room_id,
+                        'money'=>$total_money
+                    ]
+                ]);
+
+                return response()->json(array(
+                    'notification' => json_decode($res->getBody()->getContents()),
+                    'send_mail' => $resEmail->getBody()->getContents(),
+                ));
             }
         }
 

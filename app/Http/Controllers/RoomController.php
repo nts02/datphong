@@ -18,4 +18,9 @@ class RoomController extends Controller
         return response()->json($room);
     }
 
+    public function getRoomName($id){
+        $room= Room::findOrFail($id);
+        $res = $room->room_code;
+        return $res;
+    }
 }
